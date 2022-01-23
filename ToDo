@@ -1,0 +1,8 @@
+step 1 : compute pixel color histogram H using first N frames.
+step 2 : normalize histogram H_ <- H/||H||.
+step 3 : Model H_ as mixture of K(3 to 5) gaussian.
+step 4 : For each subsequent frame:
+        1) the pixel value X belong to gaussian K in GMM for which ||X - mu_k|| is minimum and ||X - mu_k|| < 2.5 var_k.
+        2) if w_k/var_k is large then classify each pixel as background else classify as foreground.
+        3) update histogram H using new pixel intensity.
+        4) If H_ and H/||H|| diggers a lot (||H - H/||H|| || is large), H_ <- H/||H|| and refit GMM.
