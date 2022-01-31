@@ -69,6 +69,9 @@ if __name__ == "__main__":
         new_frame = process.map(gaussian.process_pixel, [reshaped_frame, mean_np, weight_np, var_np, number_gaussian_np])
         process.close()
 
+        # add the frame to the video
+        util.add_frame(new_frame, write_video, height, width)
+
     end_time = time.time()
     print("Total time taken by the algorithm to process the video is :", end_time-start_time, "seconds")
 

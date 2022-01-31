@@ -1,5 +1,6 @@
 import configparser
 import cv2 as cv
+import numpy as np
 
 debug = True
 
@@ -43,3 +44,11 @@ def find_frames(input_path):
         print()
     return cnt
 
+
+def add_frame(frame, write_pointer, height, width):
+    # Adding the current frame to the video
+    # convert this frame into frame format
+
+    temp_frame = np.concatenate(frame, axis=0)
+    new_frame = temp_frame.reshape((height, width, 3))
+    write_pointer.write(new_frame)
