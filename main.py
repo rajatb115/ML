@@ -64,10 +64,10 @@ if __name__ == "__main__":
         # Reformatting the frame matrix
         reshaped_frame = frame.reshape((width * height, 3))
 
-        # Create a multiprocess function to process each pixel independently
-        process = Pool(processes=int(config['config']['num_process']))
-        new_frame = process.map(gaussian.process_pixel, [reshaped_frame, mean_np, weight_np, var_np, number_gaussian_np])
-        process.close()
+        new_frame = np.zeros((height, width))
+        for i in range(height):
+            for j in range(width):
+                new_frame[i, j] = gaussian.process_pixel([reshaped_frame[i*height+j], mean_np[i*height+j], weight_np[i*height+j], var_np[i*height+j], number_gaussian_np[i*height+j], config])
 
         # add the frame to the video
         util.add_frame(new_frame, write_video, height, width)
