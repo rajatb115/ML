@@ -1,6 +1,10 @@
 import sys
 import time
+from multiprocessing import Pool
+
 import numpy as np
+
+import gaussian
 import util
 import cv2 as cv
 from tqdm import tqdm
@@ -8,8 +12,7 @@ from tqdm import tqdm
 debug = True
 
 if __name__ == "__main__":
-    # config_path = sys.argv[1]
-    config_path = "config"
+    config_path = sys.argv[1]
     config = util.read_config(config_path)
 
     # Read video from the disk
@@ -24,7 +27,7 @@ if __name__ == "__main__":
     width = int(read_video.get(3))
     height = int(read_video.get(4))
     fps = int(read_video.get(5))
-    frames = util.find_frames(config['config']['input'])
+    frame_count = util.find_frames(config['config']['input'])
 
     # Debug the code
     if debug:
@@ -32,7 +35,7 @@ if __name__ == "__main__":
         print("Width of the video :", width)
         print("Height of the video :", height)
         print("Frame per second of the video :", fps)
-        print("Total frames in the video :", frames)
+        print("Total frames in the video :", frame_count)
         print()
 
     # Write video to the disk
@@ -45,19 +48,29 @@ if __name__ == "__main__":
     # Weights of each gaussian per pixel
     # Variance of each gaussian per pixel
     # Number of Gaussian
-    mean_np = np.zeros((height, width, 3*int(config['config']['number_gaussian'])))
-    weight_np = np.zeros((height, width, int(config['config']['number_gaussian'])))
-    var_np = np.zeros((height, width, int(config['config']['number_gaussian'])))
-    number_gaussian_np = np.zeros((height, width))
+    mean_np = np.zeros((height * width, 3*int(config['config']['number_gaussian'])))
+    weight_np = np.zeros((height * width, int(config['config']['number_gaussian'])))
+    var_np = np.zeros((height * width, int(config['config']['number_gaussian'])))
+    number_gaussian_np = np.zeros((height * width))
 
     # Read each frame and fit the gaussian and update the values
     start_time = time.time()
 
-    for _ in tqdm(range(frames), desc="Processing data"):
-        pass
+    for _ in tqdm(range(frame_count), desc="Processing data"):
+
+        # Reading the frame. frame is of the format height * width * 3 (RGB)
+        ret, frame = read_video.read()
+
+        # Reformatting the frame matrix
+        reshaped_frame = frame.reshape((width * height, 3))
+
+        # Create a multiprocess function to process each pixel independently
+        process = Pool(processes=int(config['config']['num_process']))
+        new_frame = process.map(gaussian.process_pixel, [reshaped_frame, mean_np, weight_np, var_np, number_gaussian_np])
+        process.close()
 
     end_time = time.time()
-    print("Total time taken by the algorithm to process the video is :",end_time-start_time, "seconds")
+    print("Total time taken by the algorithm to process the video is :", end_time-start_time, "seconds")
 
     read_video.release()
     write_video.release()
