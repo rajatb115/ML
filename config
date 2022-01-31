@@ -1,6 +1,6 @@
 [config]
 input = data/input_video.mpg
-output = output.avi
+output = data/output.avi
 alpha = 0.01
 weights = 0.001
 variance = 255
