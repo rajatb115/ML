@@ -1,6 +1,5 @@
 import sys
 import time
-from multiprocessing import Pool
 
 import numpy as np
 
@@ -63,15 +62,20 @@ if __name__ == "__main__":
 
         # Reformatting the frame matrix
         reshaped_frame = frame.reshape((width * height, 3))
+        new_frame = np.zeros((width * height, 3))
 
-        new_frame = np.zeros((height, width))
         for i in range(height):
             for j in range(width):
-                new_frame[i, j] = gaussian.process_pixel([reshaped_frame[i*height+j], mean_np[i*height+j], weight_np[i*height+j], var_np[i*height+j], number_gaussian_np[i*height+j], config])
+                new_frame[i*width+j], mean_np[i*width+j], var_np[i*width+j], weight_np[i*width+j]= gaussian.process_pixel([reshaped_frame[i*width+j], mean_np[i*width+j], weight_np[i*width+j], var_np[i*width+j], number_gaussian_np[i*width+j], config])
+                # print(reshaped_frame[i*height+j], new_frame[i*height+j])
+
+        tmp_frame = np.reshape(np.concatenate(new_frame, axis=0), (height, width, 3))
 
         # add the frame to the video
-        util.add_frame(new_frame, write_video, height, width)
-
+        tmp_new_frame = np.uint8(tmp_frame)
+        cv.imwrite('data/video_frame.jpg', tmp_new_frame)
+        util.add_frame(tmp_new_frame, write_video, height, width)
+        break
     end_time = time.time()
     print("Total time taken by the algorithm to process the video is :", end_time-start_time, "seconds")
 

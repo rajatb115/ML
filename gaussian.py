@@ -1,7 +1,7 @@
 import numpy as np
 from scipy import stats
 
-debug = True
+debug = False
 
 
 def process_pixel(cstm_args):
@@ -37,15 +37,18 @@ def process_pixel(cstm_args):
 
             # update the parameters
             #######################
-            rho = float(config['config']['alpha']) * stats.multivariate_normal.pdf(pixel, mean[gaussian * 3: gaussian * 3 + 3], var[gaussian]*np.eye(3))
+            rho = float(config['config']['alpha']) * stats.multivariate_normal.pdf(pixel,
+                                                                                   mean[gaussian * 3: gaussian * 3 + 3],
+                                                                                   var[gaussian] * np.eye(3))
             if debug:
                 print("rho :", rho)
 
-            mean[gaussian*3: gaussian*3+3] = (1-rho)*mean[gaussian*3: gaussian*3+3] + rho * pixel
-            var[gaussian] = (1-rho)*var[gaussian] + rho * np.dot(distance, distance)
+            mean[gaussian * 3: gaussian * 3 + 3] = (1 - rho) * mean[gaussian * 3: gaussian * 3 + 3] + rho * pixel
+            var[gaussian] = (1 - rho) * var[gaussian] + rho * np.dot(distance, distance)
 
             # If matched then weight = (1-alpha)*weight + alpha*M (M=0 if does not match, M=1 if matched)
-            weight[gaussian] = (1-float(config['config']['alpha']))*weight[gaussian] + float(config['config']['alpha'])
+            weight[gaussian] = (1 - float(config['config']['alpha'])) * weight[gaussian] + float(
+                config['config']['alpha'])
 
             # exit if matched
             break
@@ -53,8 +56,44 @@ def process_pixel(cstm_args):
             weight[gaussian] = (1 - float(config['config']['alpha'])) * weight[gaussian]
 
     # If none of the gaussian matched then check if you want to add a new gaussian or replace an existing gaussian
-    if gaussian_cnt < int(config['config']['number_gaussian']):
-        # add a new gaussian
+    update_gaussian_index = 0
+    if not matched:
+        if gaussian_cnt < int(config['config']['number_gaussian']):
+            # add a new gaussian
+            gaussian_cnt += 1
+            update_gaussian_index = gaussian_cnt - 1
+        else:
+            # replace an existing gaussian
+            # index of the gaussian to be updated is the gaussian with the minimum weight/variance ratio
+            update_gaussian_index = 0
+            ratio = weight[update_gaussian_index] / var[update_gaussian_index]
+            for i in range(1, gaussian_cnt):
+                if weight[i] / var[i] < ratio:
+                    update_gaussian_index = i
+                    ratio = weight[i] / var[i]
 
-    else:
-        # replace an existing gaussian
+        # Setting the value of new gaussian
+        # new mean = value of the pixel
+        mean[update_gaussian_index * 3:update_gaussian_index * 3 + 3] = pixel
+        var[update_gaussian_index] = config['config']['variance']
+        weight[update_gaussian_index] = config['config']['weight']
+
+        if debug:
+            print(mean)
+            print(var)
+            print(weight)
+
+    # Normalize the weights
+    sm_weight = np.sum(weight)
+    weight = np.divide(weight, sm_weight)
+
+    if debug:
+        print(weight)
+        print(gaussian_cnt)
+
+    # segment the foreground and background (background <= 6.25 sig)
+    # sort the weight/var values
+    sorted_values = np.argsort(np.divide(weight[0:gaussian_cnt], var[0:gaussian_cnt]))
+    sum_weight = 0
+
+    return pixel, mean, var, weight

@@ -2,7 +2,7 @@ import configparser
 import cv2 as cv
 import numpy as np
 
-debug = True
+debug = False
 
 
 def read_config(config_path):
