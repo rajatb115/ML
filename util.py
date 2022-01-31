@@ -1,5 +1,7 @@
 import configparser
+
 debug = True
+
 
 def read_config(config_path):
     parser = configparser.ConfigParser()
