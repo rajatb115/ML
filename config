@@ -1,0 +1,8 @@
+input:data/input_video.mpg
+output:output.avi
+alpha:0.01
+weights:0.001
+variance:255
+number_gaussian:4
+weight_threshold:0.6
+num_process:4
