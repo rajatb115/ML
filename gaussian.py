@@ -18,12 +18,11 @@ def process_pixel(cstm_args):
     if debug:
         log_info = open("data/log.txt", 'a')
         log_info.write("# At gaussian values are :\n")
-        log_info.write("Mean : " + str(mean)+"\n")
-        log_info.write("Variance : " + str(var)+"\n")
-        log_info.write("Pixel : " + str(pixel)+"\n")
-        log_info.write("Weight : " + str(weight)+"\n")
-        log_info.write("Gaussian Count : " + str(gaussian_cnt)+"\n")
-        log_info.write("\n")
+        log_info.write("Mean : " + str(mean) + "\n")
+        log_info.write("Variance : " + str(var) + "\n")
+        log_info.write("Pixel : " + str(pixel) + "\n")
+        log_info.write("Weight : " + str(weight) + "\n")
+        log_info.write("Gaussian Count : " + str(gaussian_cnt) + "\n")
         log_info.close()
 
     # check for the matching gaussian
@@ -33,17 +32,20 @@ def process_pixel(cstm_args):
         distance = pixel - mean[gaussian * 3: gaussian * 3 + 3]
 
         if debug:
-            print("Distance :", distance)
+            log_info = open("data/log.txt", 'a')
+            log_info.write("Distance : " + str(distance)+"\n")
+            log_info.close()
 
         if np.dot(distance, distance) <= 6.25 * var[gaussian]:
             matched = True
-
             # update the parameters
-            rho = float(config['config']['alpha']) * stats.multivariate_normal.pdf(pixel,
-                                                                                   mean[gaussian * 3: gaussian * 3 + 3],
-                                                                                   var[gaussian] * np.eye(3))
+            rho = stats.multivariate_normal.pdf(pixel, mean[gaussian * 3: gaussian * 3 + 3], var[gaussian] * np.eye(3))
+            rho = float(config['config']['alpha']) * rho
+
             if debug:
-                print("rho :", rho)
+                log_info = open("data/log.txt", 'a')
+                log_info.write("rho : " + str(rho)+"\n")
+                log_info.close()
 
             mean[gaussian * 3: gaussian * 3 + 3] = (1 - rho) * mean[gaussian * 3: gaussian * 3 + 3] + rho * pixel
             var[gaussian] = (1 - rho) * var[gaussian] + rho * np.dot(distance, distance)
@@ -82,11 +84,10 @@ def process_pixel(cstm_args):
 
         if debug:
             log_info = open("data/log.txt", 'a')
-            log_info.write("# At gaussian values are :\n")
             log_info.write("Values after the update of the gaussian \n")
-            log_info.write("Mean : " + str(mean)+"\n")
-            log_info.write("Variance : " + str(var)+"\n")
-            log_info.write("Weight : " + str(weight)+"\n")
+            log_info.write("Mean : " + str(mean) + "\n")
+            log_info.write("Variance : " + str(var) + "\n")
+            log_info.write("Weight : " + str(weight) + "\n")
             log_info.write("\n")
             log_info.close()
 
@@ -98,8 +99,8 @@ def process_pixel(cstm_args):
         log_info = open("data/log.txt", 'a')
         log_info.write("# At gaussian values are :\n")
         log_info.write("Values after normalizing the weights \n")
-        log_info.write("Weight : " + str(weight)+"\n")
-        log_info.write("Gaussian count : " + str(gaussian_cnt)+"\n")
+        log_info.write("Weight : " + str(weight) + "\n")
+        log_info.write("Gaussian count : " + str(gaussian_cnt) + "\n")
         log_info.write("\n")
         log_info.close()
 
@@ -107,14 +108,19 @@ def process_pixel(cstm_args):
     # sort the weight/var values
     sorted_values = np.argsort(np.divide(weight[0:gaussian_cnt], var[0:gaussian_cnt]))
     sum_weight = 0
-    #print(gaussian_cnt)
-    #print(sorted_values)
+    pixel_b = np.zeros(3)
+    pixel_f = pixel
     for i in sorted_values[::-1]:
-        distance = pixel - mean[i*3:i*3+3]
-        if np.dot(distance, distance) <= 6.25 * var[i]:
-            pixel = 255*np.ones(3)
+        distance1 = pixel_b - mean[i * 3:i * 3 + 3]
+        distance2 = pixel_f - mean[i * 3:i * 3 + 3]
+        if np.dot(distance2, distance2) <= 6.25 * var[i] and sum_weight < float(config['config']['weight_threshold']):
+            pixel_f = 255 * np.ones(3)
+
+        if np.dot(distance1, distance1) >= 6.25 * var[i]:
+            pixel_b += mean[i * 3:i * 3 + 3]
 
         sum_weight += weight[i]
-        if sum_weight > float(config['config']['weight_threshold']):
-            break
-    return pixel, mean, var, weight, gaussian_cnt
+        #if sum_weight > float(config['config']['weight_threshold']):
+        #    break
+
+    return pixel_b, pixel_f, mean, var, weight, gaussian_cnt

@@ -1,8 +1,9 @@
 [config]
 input = data/input_video.mpg
-output = data/output.avi
-alpha = 0.001
-weight = 0.001
+output_background = data/output_background.avi
+output_foreground = data/output_foreground.avi
+alpha = 0.005
+weight = 0.005
 variance = 255
 number_gaussian = 4
 weight_threshold = 0.9

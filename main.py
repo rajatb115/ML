@@ -48,7 +48,9 @@ if __name__ == "__main__":
     # Write video to the disk
     # Selecting the video compression
     video_compression = cv.VideoWriter_fourcc(*'XVID')
-    write_video = cv.VideoWriter(str(config['config']['output']), video_compression, fps, (width, height))
+    video_compression1 = cv.VideoWriter_fourcc(*'XVID')
+    write_video_background = cv.VideoWriter(str(config['config']['output_background']), video_compression, fps, (width, height))
+    write_video_foreground = cv.VideoWriter(str(config['config']['output_foreground']), video_compression1, fps, (width, height))
 
     # Make few variables to store (i.e. store the history)
     # Mean of each gaussian per pixel (RGB)
@@ -70,7 +72,8 @@ if __name__ == "__main__":
 
         # Reformatting the frame matrix
         reshaped_frame = frame.reshape((width * height, 3))
-        new_frame = np.zeros((width * height, 3))
+        new_frame_foreground = np.zeros((width * height, 3))
+        new_frame_background = np.zeros((width * height, 3))
 
         data_prep = []
         for i in range(height):
@@ -87,18 +90,28 @@ if __name__ == "__main__":
 
         for i in range(height):
             for j in range(width):
-                new_frame[i * width + j], mean_np[i * width + j], var_np[i * width + j], weight_np[i * width + j], number_gaussian_np[i * width + j] = val[i*width+j]
+                new_frame_background[i * width + j], new_frame_foreground[i*width+j], mean_np[i * width + j], var_np[i * width + j], weight_np[i * width + j], number_gaussian_np[i * width + j] = val[i*width+j]
 
-        tmp_frame = np.reshape(np.concatenate(new_frame, axis=0), (height, width, 3))
+        tmp_frame_background = np.reshape(np.concatenate(new_frame_background, axis=0), (height, width, 3))
+        tmp_frame_foreground = np.reshape(np.concatenate(new_frame_foreground, axis=0), (height, width, 3))
 
         # add the frame to the video
-        tmp_new_frame = np.uint8(tmp_frame)
-        cv.imwrite('data/video_frame.jpg', tmp_new_frame)
-        util.add_frame(tmp_new_frame, write_video, height, width)
-        break
+        tmp_new_frame_foreground = np.uint8(tmp_frame_foreground)
+        tmp_new_frame_background = np.uint8(tmp_frame_background)
+
+        cv.imwrite('data/video_frame_back.jpg', tmp_new_frame_background)
+        cv.imwrite('data/video_frame_fore.jpg', tmp_new_frame_foreground)
+
+        #util.add_frame_foreground(tmp_new_frame, write_video_foreground, height, width)
+        write_video_background.write(tmp_new_frame_background)
+        write_video_foreground.write(tmp_new_frame_foreground)
+
+        if _ == 25:
+            break
     end_time = time.time()
     print("Total time taken by the algorithm to process the video is :", end_time - start_time, "seconds")
 
     read_video.release()
-    write_video.release()
+    write_video_foreground.release()
+    write_video_background.release()
     cv.destroyAllWindows()
