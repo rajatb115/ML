@@ -1,9 +1,9 @@
 [config]
 input = data/input_video.mpg
 output = data/output.avi
-alpha = 0.01
+alpha = 0.001
 weight = 0.001
 variance = 255
 number_gaussian = 4
-weight_threshold = 0.6
+weight_threshold = 0.9
 num_process = 4

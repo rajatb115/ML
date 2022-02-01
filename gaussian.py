@@ -16,12 +16,15 @@ def process_pixel(cstm_args):
     matched = False
 
     if debug:
-        print("# At gaussian values are :")
-        print("Mean :", mean)
-        print("Variance :", var)
-        print("Pixel :", pixel)
-        print("Weight :", weight)
-        print("Gaussian Count :", gaussian_cnt)
+        log_info = open("data/log.txt", 'a')
+        log_info.write("# At gaussian values are :\n")
+        log_info.write("Mean : " + str(mean)+"\n")
+        log_info.write("Variance : " + str(var)+"\n")
+        log_info.write("Pixel : " + str(pixel)+"\n")
+        log_info.write("Weight : " + str(weight)+"\n")
+        log_info.write("Gaussian Count : " + str(gaussian_cnt)+"\n")
+        log_info.write("\n")
+        log_info.close()
 
     # check for the matching gaussian
     for gaussian in range(gaussian_cnt):
@@ -36,7 +39,6 @@ def process_pixel(cstm_args):
             matched = True
 
             # update the parameters
-            #######################
             rho = float(config['config']['alpha']) * stats.multivariate_normal.pdf(pixel,
                                                                                    mean[gaussian * 3: gaussian * 3 + 3],
                                                                                    var[gaussian] * np.eye(3))
@@ -79,21 +81,40 @@ def process_pixel(cstm_args):
         weight[update_gaussian_index] = config['config']['weight']
 
         if debug:
-            print(mean)
-            print(var)
-            print(weight)
+            log_info = open("data/log.txt", 'a')
+            log_info.write("# At gaussian values are :\n")
+            log_info.write("Values after the update of the gaussian \n")
+            log_info.write("Mean : " + str(mean)+"\n")
+            log_info.write("Variance : " + str(var)+"\n")
+            log_info.write("Weight : " + str(weight)+"\n")
+            log_info.write("\n")
+            log_info.close()
 
     # Normalize the weights
     sm_weight = np.sum(weight)
     weight = np.divide(weight, sm_weight)
 
     if debug:
-        print(weight)
-        print(gaussian_cnt)
+        log_info = open("data/log.txt", 'a')
+        log_info.write("# At gaussian values are :\n")
+        log_info.write("Values after normalizing the weights \n")
+        log_info.write("Weight : " + str(weight)+"\n")
+        log_info.write("Gaussian count : " + str(gaussian_cnt)+"\n")
+        log_info.write("\n")
+        log_info.close()
 
     # segment the foreground and background (background <= 6.25 sig)
     # sort the weight/var values
     sorted_values = np.argsort(np.divide(weight[0:gaussian_cnt], var[0:gaussian_cnt]))
     sum_weight = 0
+    #print(gaussian_cnt)
+    #print(sorted_values)
+    for i in sorted_values[::-1]:
+        distance = pixel - mean[i*3:i*3+3]
+        if np.dot(distance, distance) <= 6.25 * var[i]:
+            pixel = 255*np.ones(3)
 
-    return pixel, mean, var, weight
+        sum_weight += weight[i]
+        if sum_weight > float(config['config']['weight_threshold']):
+            break
+    return pixel, mean, var, weight, gaussian_cnt

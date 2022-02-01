@@ -8,9 +8,16 @@ import util
 import cv2 as cv
 from tqdm import tqdm
 
-debug = True
+debug = False
 
 if __name__ == "__main__":
+
+    # cleaning the log file
+    if debug:
+        log_info = open("data/log.txt", 'w')
+        log_info.write("")
+        log_info.close()
+
     config_path = sys.argv[1]
     config = util.read_config(config_path)
 
@@ -47,7 +54,7 @@ if __name__ == "__main__":
     # Weights of each gaussian per pixel
     # Variance of each gaussian per pixel
     # Number of Gaussian
-    mean_np = np.zeros((height * width, 3*int(config['config']['number_gaussian'])))
+    mean_np = np.zeros((height * width, 3 * int(config['config']['number_gaussian'])))
     weight_np = np.zeros((height * width, int(config['config']['number_gaussian'])))
     var_np = np.zeros((height * width, int(config['config']['number_gaussian'])))
     number_gaussian_np = np.zeros((height * width))
@@ -66,8 +73,10 @@ if __name__ == "__main__":
 
         for i in range(height):
             for j in range(width):
-                new_frame[i*width+j], mean_np[i*width+j], var_np[i*width+j], weight_np[i*width+j]= gaussian.process_pixel([reshaped_frame[i*width+j], mean_np[i*width+j], weight_np[i*width+j], var_np[i*width+j], number_gaussian_np[i*width+j], config])
-                # print(reshaped_frame[i*height+j], new_frame[i*height+j])
+                new_frame[i * width + j], mean_np[i * width + j], var_np[i * width + j], weight_np[
+                    i * width + j], number_gaussian_np[i*width + j] = gaussian.process_pixel(
+                    [reshaped_frame[i * width + j], mean_np[i * width + j], weight_np[i * width + j],
+                     var_np[i * width + j], number_gaussian_np[i * width + j], config])
 
         tmp_frame = np.reshape(np.concatenate(new_frame, axis=0), (height, width, 3))
 
@@ -75,9 +84,9 @@ if __name__ == "__main__":
         tmp_new_frame = np.uint8(tmp_frame)
         cv.imwrite('data/video_frame.jpg', tmp_new_frame)
         util.add_frame(tmp_new_frame, write_video, height, width)
-        break
+
     end_time = time.time()
-    print("Total time taken by the algorithm to process the video is :", end_time-start_time, "seconds")
+    print("Total time taken by the algorithm to process the video is :", end_time - start_time, "seconds")
 
     read_video.release()
     write_video.release()

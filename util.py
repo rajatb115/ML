@@ -11,10 +11,17 @@ def read_config(config_path):
 
     # Debug
     if debug:
-        print("# At util values are :")
-        print("Input :", parser['config']['input'])
-        print("Output :", parser['config']['output'])
-        print()
+        log_info = open("data/log.txt", 'a')
+        log_info.write("# At util values are : \n")
+        log_info.write("Input : " + str(parser['config']['input'])+"\n")
+        log_info.write("Output : " + str(parser['config']['output'])+"\n")
+        log_info.write("Alpha : " + str(parser['config']['alpha'])+"\n")
+        log_info.write("Weight : " + str(parser['config']['weight'])+"\n")
+        log_info.write("Variance : " + str(parser['config']['variance'])+"\n")
+        log_info.write("Number of gaussian : " + str(parser['config']['number_gaussian'])+"\n")
+        log_info.write("Weight threshold : " + str(parser['config']['weight_threshold'])+"\n")
+        log_info.write("\n")
+        log_info.close()
 
     return parser
 
@@ -39,9 +46,11 @@ def find_frames(input_path):
     read_video.release()
 
     if debug:
-        print("# At util values are :")
-        print("Number of frames :", cnt)
-        print()
+        log_info = open("data/log.txt", 'a')
+        log_info.write("# At util values are :\n")
+        log_info.write("Number of frames : " + str(cnt)+"\n")
+        log_info.write("\n")
+        log_info.close()
     return cnt
 
 
