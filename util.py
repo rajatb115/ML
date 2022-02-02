@@ -54,15 +54,37 @@ def find_frames(input_path):
     return cnt
 
 
-def add_frame_foreground(frame, write_pointer, height, width):
-    # Adding the current frame to the video
-    # convert this frame into frame format
+def find_background(frame, tmp_frame_foreground, max_history, frame_history, frame_history_cnt, width, height):
+    new_frame = np.zeros((height, width, 3))
 
-    # temp_frame = np.concatenate(frame, axis=0)
-    # new_frame = temp_frame.reshape((height, width, 3))
+    if frame_history_cnt <= max_history:
+        for i in range(height):
+            for j in range(width):
+                if (tmp_frame_foreground[i, j, 0] != 255 or tmp_frame_foreground[i, j, 1] != 255 or
+                        tmp_frame_foreground[i, j, 0] != 255):
+                    new_frame[i, j, 0] = np.mean(np.array(frame_history)[:, i, j, 0])
+                    new_frame[i, j, 1] = np.mean(np.array(frame_history)[:, i, j, 1])
+                    new_frame[i, j, 2] = np.mean(np.array(frame_history)[:, i, j, 2])
 
-    write_pointer.write(frame)
+                else:
+                    new_frame[i, j, 0] = frame[i, j, 0]
+                    new_frame[i, j, 1] = frame[i, j, 1]
+                    new_frame[i, j, 2] = frame[i, j, 2]
+        frame_history_cnt += 1
+        frame_history.append(new_frame)
+    else:
+        frame_history = frame_history[1:]
+        for i in range(height):
+            for j in range(width):
+                if (tmp_frame_foreground[i, j, 0] != 255 or tmp_frame_foreground[i, j, 1] != 255 or
+                        tmp_frame_foreground[i, j, 0] != 255):
+                    new_frame[i, j, 0] = np.mean(np.array(frame_history)[:, i, j, 0])
+                    new_frame[i, j, 1] = np.mean(np.array(frame_history)[:, i, j, 1])
+                    new_frame[i, j, 2] = np.mean(np.array(frame_history)[:, i, j, 2])
 
-
-def add_frame_background(foreground_frame, frame, write_pointer1, height, width):
-    write_pointer1.write()
+                else:
+                    new_frame[i, j, 0] = frame[i, j, 0]
+                    new_frame[i, j, 1] = frame[i, j, 1]
+                    new_frame[i, j, 2] = frame[i, j, 2]
+        frame_history.append(new_frame)
+    return new_frame, frame_history, frame_history_cnt

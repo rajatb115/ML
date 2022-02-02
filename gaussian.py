@@ -11,6 +11,8 @@ def process_pixel(cstm_args):
     var = cstm_args[3]
     gaussian_cnt = int(cstm_args[4])
     config = cstm_args[5]
+    frame_history = cstm_args[6]
+    frame_history_cnt = cstm_args[7]
 
     # variable to check if value of pixel is matching any gaussian
     matched = False
@@ -108,19 +110,41 @@ def process_pixel(cstm_args):
     # sort the weight/var values
     sorted_values = np.argsort(np.divide(weight[0:gaussian_cnt], var[0:gaussian_cnt]))
     sum_weight = 0
+
     pixel_b = np.zeros(3)
     pixel_f = pixel
+    t = False
     for i in sorted_values[::-1]:
-        distance1 = pixel_b - mean[i * 3:i * 3 + 3]
-        distance2 = pixel_f - mean[i * 3:i * 3 + 3]
-        if np.dot(distance2, distance2) <= 6.25 * var[i] and sum_weight < float(config['config']['weight_threshold']):
+        distance = pixel_f - mean[i * 3 : i * 3 + 3]
+        if np.dot(distance, distance) <= 6.25 * var[i] and sum_weight < float(config['config']['weight_threshold']):
             pixel_f = 255 * np.ones(3)
-
-        if np.dot(distance1, distance1) >= 6.25 * var[i]:
-            pixel_b += mean[i * 3:i * 3 + 3]
+            t = True
 
         sum_weight += weight[i]
-        #if sum_weight > float(config['config']['weight_threshold']):
+        # if sum_weight > float(config['config']['weight_threshold']):
         #    break
+    if not t:
+        pixel_b[0] = np.mean(frame_history[:, 0])
+        pixel_b[1] = np.mean(frame_history[:, 1])
+        pixel_b[2] = np.mean(frame_history[:, 2])
+        # print(pixel_b.shape)
+    else:
+        pixel_b = pixel
+        # print(pixel_b.shape)
 
-    return pixel_b, pixel_f, mean, var, weight, gaussian_cnt
+    # print(frame_history_cnt)
+
+    if int(frame_history_cnt) < int(config['config']['history']):
+        # print(frame_history.shape)
+        frame_history[int(frame_history_cnt), 0] = pixel_b[0]
+        frame_history[int(frame_history_cnt), 1] = pixel_b[1]
+        frame_history[int(frame_history_cnt), 2] = pixel_b[2]
+        frame_history_cnt += 1
+    else:
+        # frame_history = frame_history[1:]
+        for kk in range(1, int(frame_history_cnt)):
+            frame_history[kk - 1] = frame_history[kk]
+
+        frame_history[len(frame_history) - 1, :] = pixel_b[:]
+
+    return pixel_b, pixel_f, mean, var, weight, gaussian_cnt, frame_history, frame_history_cnt

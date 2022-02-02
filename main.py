@@ -49,8 +49,10 @@ if __name__ == "__main__":
     # Selecting the video compression
     video_compression = cv.VideoWriter_fourcc(*'XVID')
     video_compression1 = cv.VideoWriter_fourcc(*'XVID')
-    write_video_background = cv.VideoWriter(str(config['config']['output_background']), video_compression, fps, (width, height))
-    write_video_foreground = cv.VideoWriter(str(config['config']['output_foreground']), video_compression1, fps, (width, height))
+    write_video_background = cv.VideoWriter(str(config['config']['output_background']), video_compression, fps,
+                                            (width, height))
+    write_video_foreground = cv.VideoWriter(str(config['config']['output_foreground']), video_compression1, fps,
+                                            (width, height))
 
     # Make few variables to store (i.e. store the history)
     # Mean of each gaussian per pixel (RGB)
@@ -65,6 +67,8 @@ if __name__ == "__main__":
     # Read each frame and fit the gaussian and update the values
     start_time = time.time()
 
+    frame_history = np.zeros((width * height, int(config['config']['history']), 3))
+    frame_history_cnt = np.zeros((width * height))
     for _ in tqdm(range(frame_count), desc="Processing data"):
 
         # Reading the frame. frame is of the format height * width * 3 (RGB)
@@ -82,16 +86,16 @@ if __name__ == "__main__":
                 # number_gaussian_np[i*width + j] = gaussian.process_pixel([reshaped_frame[i * width + j],
                 # mean_np[i * width + j], weight_np[i * width + j],var_np[i * width + j], number_gaussian_np[i *
                 # width + j], config])
-                data_prep.append([reshaped_frame[i * width + j], mean_np[i * width + j], weight_np[i * width + j], var_np[i * width + j], number_gaussian_np[i * width + j], config])
-
+                # data_prep.append([reshaped_frame[i * width + j], mean_np[i * width + j], weight_np[i * width + j], var_np[i * width + j], number_gaussian_np[i * width + j], config])
+                data_prep.append([reshaped_frame[i * width + j], mean_np[i * width + j], weight_np[i * width + j],var_np[i * width + j], number_gaussian_np[i * width + j], config,frame_history[i * width + j], frame_history_cnt[i * width + j]])
         process = Pool(processes=int(config['config']['num_process']))
         val = process.map(gaussian.process_pixel, data_prep)
         process.close()
 
         for i in range(height):
             for j in range(width):
-                new_frame_background[i * width + j], new_frame_foreground[i*width+j], mean_np[i * width + j], var_np[i * width + j], weight_np[i * width + j], number_gaussian_np[i * width + j] = val[i*width+j]
-
+                # new_frame_background[i * width + j], new_frame_foreground[i * width + j], mean_np[i * width + j], var_np[i * width + j], weight_np[i * width + j], number_gaussian_np[i * width + j] = val[i * width + j]
+                new_frame_background[i * width + j], new_frame_foreground[i * width + j], mean_np[i * width + j], var_np[i * width + j], weight_np[i * width + j], number_gaussian_np[i * width + j], frame_history[i * width + j], frame_history_cnt[i * width + j] = val[i * width + j]
         tmp_frame_background = np.reshape(np.concatenate(new_frame_background, axis=0), (height, width, 3))
         tmp_frame_foreground = np.reshape(np.concatenate(new_frame_foreground, axis=0), (height, width, 3))
 
@@ -102,7 +106,7 @@ if __name__ == "__main__":
         cv.imwrite('data/video_frame_back.jpg', tmp_new_frame_background)
         cv.imwrite('data/video_frame_fore.jpg', tmp_new_frame_foreground)
 
-        #util.add_frame_foreground(tmp_new_frame, write_video_foreground, height, width)
+        # util.add_frame_foreground(tmp_new_frame, write_video_foreground, height, width)
         write_video_background.write(tmp_new_frame_background)
         write_video_foreground.write(tmp_new_frame_foreground)
 
