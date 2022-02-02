@@ -110,8 +110,6 @@ if __name__ == "__main__":
         write_video_background.write(tmp_new_frame_background)
         write_video_foreground.write(tmp_new_frame_foreground)
 
-        if _ == 25:
-            break
     end_time = time.time()
     print("Total time taken by the algorithm to process the video is :", end_time - start_time, "seconds")
 
